@@ -24,7 +24,7 @@ def validate_data(df):
         df (DataFrame): The DataFrame to validate.
     
     Returns:
-        bool: True if the data is valid, otherwise False.
+        bool: True if the data is valid, or False.
     """
     required_columns = {'username', 'email', 'role'}
     if not required_columns.issubset(df.columns):

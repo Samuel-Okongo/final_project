@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Adjust the database URL as per your configuration
-engine = create_engine('your_database_url', echo=True, future=True)
+engine = create_engine('postgresql://user:password@localhost:5432/mydatabase', echo=True, future=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # db_session should not be a single instance but generated per request/session in use
