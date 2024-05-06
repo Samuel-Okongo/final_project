@@ -18,8 +18,17 @@ class Database:
             )
 
     @classmethod
+    def get_engine(cls):
+        """Returns the engine, ensuring it's initialized."""
+        if cls._engine is None:
+            raise ValueError("Database not initialized. Call `initialize()` first.")
+        return cls._engine
+
+    @classmethod
     def get_session_factory(cls):
         """Returns the session factory, ensuring it's initialized."""
         if cls._session_factory is None:
             raise ValueError("Database not initialized. Call `initialize()` first.")
         return cls._session_factory
+    
+    
