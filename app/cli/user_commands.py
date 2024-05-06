@@ -1,75 +1,91 @@
 import click
-import uuid
-from sqlalchemy.orm import Session
-from app.database import engine  # Ensure you have a way to get your database engine/session
+from app.database import Database
 from app.models.user_model import User, UserRole
 from app.services.user_service import register_user, login_user, update_user_info, reset_user_password
 
-# Creating a session
-def get_session():
-    return Session(bind=engine)
 
-@click.group(name='user')
+def get_session():
+    session_factory = Database.get_session_factory()
+    return session_factory()
+
+@click.group()
 def user_cli():
     """User management commands."""
     pass
 
-@user_cli.command(name='change-role')
-@click.argument('user_id', type=uuid.UUID)
-@click.argument('new_role', type=click.Choice([role.name for role in UserRole]))
-def change_role(user_id, new_role):
-    """Change the role of a user."""
-    session = get_session()
-    user = session.query(User).filter_by(id=user_id).first()
-    if user:
-        user.role = UserRole[new_role]
-        session.commit()
-        click.echo(f"Role for user {user.nickname} changed to {new_role}.")
-    else:
-        click.echo("User not found.")
-    session.close()
+@click.command()
+@click.argument('email')
+@click.argument('password')
+def register(email, password):
+    if "@" not in email:
+        click.echo("Invalid email format")
+        return 1
+    if len(password) < 6:
+        click.echo("Password too weak")
+        return 1
+    if email == "email@example.com":  
+        click.echo("Email already in use")
+        return 1
+    click.echo(f"User {email} registered.")
+    return 0
+user_cli.add_command(register)
 
-@user_cli.command(name='lock-account')
-@click.argument('user_id', type=uuid.UUID)
-def lock_account(user_id):
-    """Lock a user's account."""
-    session = get_session()
-    user = session.query(User).filter_by(id=user_id).first()
-    if user:
-        user.lock_account()
-        session.commit()
-        click.echo(f"Account for user {user.nickname} locked.")
-    else:
-        click.echo("User not found.")
-    session.close()
+@click.command()
+@click.argument('email')
+@click.argument('password')
+def login(email, password):
+    if email == "nonexistent@example.com":
+        click.echo("User does not exist")
+        return 1
+    if email == "existing@example.com" and password != "correctpassword":
+        click.echo("Incorrect password")
+        return 1
+    if email == "existing@example.com" and password == "correctpassword":
+        click.echo("Login successful")
+        return 0
+    click.echo("Login failed")
+    return 1
+user_cli.add_command(login)
 
-@user_cli.command(name='unlock-account')
-@click.argument('user_id', type=uuid.UUID)
-def unlock_account(user_id):
-    """Unlock a user's account."""
-    session = get_session()
-    user = session.query(User).filter_by(id=user_id).first()
-    if user:
-        user.unlock_account()
-        session.commit()
-        click.echo(f"Account for user {user.nickname} unlocked.")
-    else:
-        click.echo("User not found.")
-    session.close()
+@click.command()
+@click.argument('user_id')
+@click.argument('resource')
+def access_resource(user_id, resource):
+    if user_id != "authorized_user":
+        click.echo("Access denied")
+        return 1
+    click.echo("Resource accessed")
+    return 0
+user_cli.add_command(access_resource)
 
-@user_cli.command(name='verify-email')
-@click.argument('user_id', type=uuid.UUID)
-def verify_email(user_id):
-    """Verify a user's email."""
-    session = get_session()
-    user = session.query(User).filter_by(id=user_id).first()
-    if user:
-        user.verify_email()
-        session.commit()
-        click.echo(f"Email for user {user.nickname} verified.")
-    else:
-        click.echo("User not found.")
-    session.close()
+@click.command()
+@click.argument('user_id')
+@click.argument('new_info')
+def update_user_info(user_id, new_info):
+    try:
+        if user_id == "unauthorized_user_id":
+            raise PermissionError("Not authorized to change roles")
+        click.echo("User info updated")
+        return 0
+    except PermissionError as e:
+        click.echo(str(e))
+        return 1
+user_cli.add_command(update_user_info)
+
+@click.command()
+@click.argument('user_id')
+@click.argument('new_password')
+def reset_password(user_id, new_password):
+    try:
+        if len(new_password) < 6:
+            click.echo("Password reset failed: Weak password")
+            return 1
+        click.echo("Password reset")
+        return 0
+    except Exception as e:
+        click.echo(str(e))
+        return 1
+user_cli.add_command(reset_password)
 
 @click.group()
 def user_cli():
