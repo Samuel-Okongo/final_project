@@ -1,7 +1,6 @@
 import click
 from app.database import Database
 from app.models.user_model import User, UserRole
-from app.services.user_service import register_user, login_user, update_user_info, reset_user_password
 
 
 def get_session():
@@ -86,51 +85,6 @@ def reset_password(user_id, new_password):
         click.echo(str(e))
         return 1
 user_cli.add_command(reset_password)
-
-@click.group()
-def user_cli():
-    """User-related commands."""
-    pass
-
-@user_cli.command()
-@click.argument('email')
-@click.argument('password')
-def register(email, password):
-    """Register a new user."""
-    result = register_user(email, password)
-    if result:
-        click.echo("Registration successful")
-    else:
-        click.echo("Registration failed")
-
-@user_cli.command()
-@click.argument('email')
-@click.argument('password')
-def login(email, password):
-    """Login a user."""
-    if login_user(email, password):
-        click.echo("Login successful")
-    else:
-        click.echo("Login failed")
-
-@user_cli.command()
-@click.argument('user_id')
-@click.argument('new_info')
-def update_user_info(user_id, new_info):
-    """Update user information."""
-    if update_user_info(user_id, new_info):
-        click.echo("User information updated successfully")
-    else:
-        click.echo("Failed to update user information")
-
-@user_cli.command()
-@click.argument('user_id')
-def reset_password(user_id):
-    """Reset a user's password."""
-    if reset_user_password(user_id):
-        click.echo("Password reset successful")
-    else:
-        click.echo("Password reset failed")
 
 if __name__ == '__main__':
     user_cli()
